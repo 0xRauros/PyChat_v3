@@ -1,3 +1,5 @@
+![alt text](./demo.png "Logon and register screen")
+
 # PyChat_v3
 Python 3 P2P chat application, secured with AES encryption
 
