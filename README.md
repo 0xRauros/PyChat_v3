@@ -4,10 +4,11 @@
 Python 3 P2P chat application, secured with AES encryption
 
 ---
-
+## [Version 3.0.2]
+Chat works but the all data is being send in plain text, not encrypted yet!
+---
 ## [Version 3.0.1]
 Only a concept application. Core code is missing, only the front-end works.
-
 ---
 
 Installation:
