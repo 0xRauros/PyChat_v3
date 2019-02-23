@@ -58,10 +58,6 @@ class Login(Tk):
         self.options['host'].set('0.0.0.0')
         self.options['port'].set(8989)
 
-        global s
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(2)
-
         photo = PhotoImage(file='images/login_img.png')
         #photo = photo.zoom(2)
         photo = photo.subsample(1)
@@ -77,14 +73,14 @@ class Login(Tk):
         Label(self, text = 'Password', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 3, column = 0)
         Entry(self, textvariable = self.options['pwd'], width = 30, show = '*').grid(row = 4, column = 0, columnspan = 2)
 
-        Label(self, text = 'Host', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 5, column = 0)
-        Entry(self, textvariable = self.options['host'], width = 30).grid(row = 6, column = 0, columnspan = 2)
+        Label(self, text = 'Server Password', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 5, column = 0)
+        Entry(self, textvariable = self.options['key'], width = 30, show = '*').grid(row = 6, column = 0, columnspan = 2)
 
-        Label(self, text = 'Port', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 7, column = 0)
-        Entry(self, textvariable = self.options['port'], width = 30).grid(row = 8, column = 0, columnspan = 2)
+        Label(self, text = 'Host', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 7, column = 0)
+        Entry(self, textvariable = self.options['host'], width = 30).grid(row = 8, column = 0, columnspan = 2)
 
-        Label(self, text = 'Server Password', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 9, column = 0)
-        Entry(self, textvariable = self.options['key'], width = 30, show = '*').grid(row = 10, column = 0, columnspan = 2)
+        Label(self, text = 'Port', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 9, column = 0)
+        Entry(self, textvariable = self.options['port'], width = 30).grid(row = 10, column = 0, columnspan = 2)
 
         login_clk = Button(self, text = 'Login', command = self.login, width = 30).grid(row = 11, column = 0, columnspan = 2)
         register_clk = Button(self, text = 'Register', command = self.register, width = 30).grid(row = 12, column = 0, columnspan = 2)
@@ -101,12 +97,13 @@ class Login(Tk):
         for user in open('./users.txt').readlines():
             if self.options['username'].get() == user.split(':')[0].strip() and check_pwd == user.split(':')[1].strip():
                 self.destroy()
-                main = MainWindow(self.options['username'].get(), self.options['key'].get())
+                main = MainWindow(self.options['username'].get(), self.options['host'].get(), self.options['port'].get(), self.options['key'].get())
                 main.mainloop()
             #else:
             #    print(user.split(':')[0])
 
         messagebox.showwarning('ERROR', 'Invalid username or password!')
+
 
     def exit(self, event):
         sys.exit(0)
@@ -185,9 +182,9 @@ class Login(Tk):
         self.reg.destroy()
 
 class MainWindow(Tk):
-    def __init__(self, username, server_pwd):
+    def __init__(self, username, host, port, server_pwd):
         Tk.__init__(self)
-        self.title(string = "Welcome, %s" % username)
+        self.title(string = "PyChat | Welcome, %s" % username)
         self.resizable(0,0)
         #self.style = Style()
         #self.style.theme_use("clam")
@@ -200,11 +197,18 @@ class MainWindow(Tk):
 
         global user
         global key
+        global h
+        global p
         user = username
         key = server_pwd
+        h = host
+        p = port
+
+        global s
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(3)
 
         self.bind("<Escape>", self.exit) # Press ESC to quit app
-
 
         self.options = {
             'chatbar' : StringVar(),
@@ -217,11 +221,10 @@ class MainWindow(Tk):
         self.options['chatbox'].tag_configure('yellow', foreground='yellow')
         self.options['chatbox'].tag_configure('red', foreground='red')
         self.options['chatbox'].tag_configure('deeppink', foreground='deeppink')
-        self.options['chatbox'].tag_configure('red', foreground='red')
         self.options['chatbox'].tag_configure('orange', foreground='orange')
         self.options['chatbox'].tag_configure('bold', font='bold')
 
-        self.options['chatbox'].insert('1.0', '[SYSTEM] Do /help to view a list with commands.\n', 'orange')
+        self.options['chatbox'].insert(END, '[SYSTEM] Do /help to view a list with commands.\n', 'deeppink')
 
         # Send text entry
         self.options['chatbar'] = Entry(self, textvariable = self.options['chatbar'], width = 70)
@@ -232,8 +235,67 @@ class MainWindow(Tk):
 
         submit = Button(self, text = "Submit", command = self.send_message, width = 68).grid(row = 7, column = 0, columnspan = 2)
 
+        try:
+            self.connect()
+        except Exception as e:
+            self.options['chatbox'].insert(END, '[ERROR] %s\n' % e, 'red')
+
+
     def send_message_event(self, event):
         self.send_message()
+
+    def connect(self):
+        self.options['chatbox'].insert(END, '[SYSTEM] Attempting to connect to %s:%i as %s\n' % (h, int(p), user), 'deeppink')
+
+        # Start thread
+        thread = threading.Thread(target=self.keep_alive)
+        thread.daemon = True
+        thread.start()
+
+    def keep_alive(self):
+        try:
+            s.connect((h, int(p)))
+            self.options['chatbox'].insert(END, '[SYSTEM] Connected!\n', 'deeppink')
+            self.options['chatbox'].see(END)
+            foo = 'USER$' + user
+            s.send(foo.encode('utf-8'))
+        except Exception as e:
+            self.options['chatbox'].insert(END, '[ERROR] %s\n' % e, 'red')
+            self.options['chatbox'].see(END)
+            return
+
+        while True:
+            socket_list = [sys.stdin, s]
+
+            # Get the list sockets which are readable
+            read_sockets, write_sockets, error_sockets = select.select(socket_list , [], [])
+
+            for sock in read_sockets:
+                if sock == s:
+                    data = sock.recv(1024)
+                    data = data.decode('utf-8')
+                    print(data)
+
+                    try:
+                        data = AESCipher.decrypt(key, data)
+                        #print(data) # Debug
+                    except Exception:
+                        pass
+
+                    if not data:
+                        self.options['chatbox'].insert(END, 'Disconnected from server\n', 'red')
+                        self.options['chatbox'].see(END)
+                        return False
+                    else:
+                        # Show data
+                        if data.startswith('[SERVER]'):
+                            self.options['chatbox'].insert(END, '[%s] %s\n' % (time.strftime('%X'),data.strip()), 'deeppink')
+                            self.options['chatbox'].see(END)
+
+                        else:
+                            self.options['chatbox'].insert(END, '[%s] %s\n' % (time.strftime('%X'),data.strip()), 'orange')
+                            self.options['chatbox'].see(END)
+
 
     def send_message(self):
         if self.options['chatbar'].get() != '':
@@ -247,6 +309,8 @@ class MainWindow(Tk):
         elif self.options['chatbar'].get() == '/whoami':
             self.options['chatbar'].delete(0, END) # Clear chatbar
             messagebox.showinfo('INFO', 'You are: %s' % user)
+        elif self.options['chatbar'].get() == '/quit' or self.options['chatbar'].get() == '/exit':
+            sys.exit(0)
         elif self.options['chatbar'].get() == '/help':
             message = '''Listing commands for non-root users...
 Commands:
@@ -254,14 +318,17 @@ Commands:
         /whoami     | Show as which username you're connected
         /clear      | Clear chatbox
         /cls        | Alias for /clear
+        /quit       | Shutdown application
+        /exit       | Alias for /quit
             '''
-            self.options['chatbox'].insert(END, '[SYSTEM] %s\n' % (message), 'orange') # Insert on top
+            self.options['chatbox'].insert(END, '[SYSTEM] %s\n' % (message), 'deeppink') # Insert on top
             self.options['chatbar'].delete(0, END) # Clear chatbar
         else:
             message = '[%s] %s ' % (user, self.options['chatbar'].get())
             self.options['chatbox'].insert(END, '[%s] %s\n' % (time.strftime('%X'), message)) # Insert on top
             self.options['chatbar'].delete(0, END) # Clear chatbar
             #s.send(AESCipher.encrypt(key, message)) # Send message
+            s.send(message.encode('utf-8'))
             self.options['chatbox'].see(END)
 
     def exit(self, event):
