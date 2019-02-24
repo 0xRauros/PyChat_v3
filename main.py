@@ -334,6 +334,7 @@ Commands:
             '''
             self.options['chatbox'].insert(END, '[SYSTEM] %s\n' % (message), 'deeppink') # Insert on top
             self.options['chatbar'].delete(0, END) # Clear chatbar
+            self.options['chatbox'].see(END)
         else:
             message = '[%s] %s ' % (user, self.options['chatbar'].get())
             self.options['chatbox'].insert(END, '[%s] %s\n' % (time.strftime('%X'), message)) # Insert on top
