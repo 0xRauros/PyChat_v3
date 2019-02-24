@@ -8,34 +8,30 @@ if len(sys.argv) < 4:
     print('Usage: python server.py <host> <port> <password>')
     sys.exit(1)
 
-class AESCipher:
-    def __init__(self, key ):
-        self.key = key
+def encrypt(key, source, encode=True):
+    key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
+    IV = Random.new().read(AES.block_size)  # generate IV
+    encryptor = AES.new(key, AES.MODE_CBC, IV)
+    padding = AES.block_size - len(source) % AES.block_size  # calculate needed padding
+    source += bytes([padding]) * padding  # Python 2.x: source += chr(padding) * padding
+    data = IV + encryptor.encrypt(source)  # store the IV at the beginning and encrypt
+    return base64.b64encode(data).decode("latin-1") if encode else data
 
-    def encrypt(key, source, encode=True):
-        key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
-        IV = Random.new().read(AES.block_size)  # generate IV
-        encryptor = AES.new(key, AES.MODE_CBC, IV)
-        padding = AES.block_size - len(source) % AES.block_size  # calculate needed padding
-        source += bytes([padding]) * padding  # Python 2.x: source += chr(padding) * padding
-        data = IV + encryptor.encrypt(source)  # store the IV at the beginning and encrypt
-        return base64.b64encode(data).decode("latin-1") if encode else data
-
-    def decrypt(key, source, decode=True):
-        if decode:
-            source = base64.b64decode(source.encode("latin-1"))
-        key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
-        IV = source[:AES.block_size]  # extract the IV from the beginning
-        decryptor = AES.new(key, AES.MODE_CBC, IV)
-        data = decryptor.decrypt(source[AES.block_size:])  # decrypt
-        padding = data[-1]  # pick the padding value from the end; Python 2.x: ord(data[-1])
-        if data[-padding:] != bytes([padding]) * padding:  # Python 2.x: chr(padding) * padding
-            raise ValueError("Invalid padding...")
-        return data[:-padding]  # remove the padding
+def decrypt(key, source, decode=True):
+    if decode:
+        source = base64.b64decode(source.encode("latin-1"))
+    key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
+    IV = source[:AES.block_size]  # extract the IV from the beginning
+    decryptor = AES.new(key, AES.MODE_CBC, IV)
+    data = decryptor.decrypt(source[AES.block_size:])  # decrypt
+    padding = data[-1]  # pick the padding value from the end; Python 2.x: ord(data[-1])
+    if data[-padding:] != bytes([padding]) * padding:  # Python 2.x: chr(padding) * padding
+        raise ValueError("Invalid padding...")
+    return data[:-padding]  # remove the padding
 
 host = sys.argv[1]
 port = sys.argv[2]
-key = sys.argv[3]
+key = sys.argv[3].encode('utf-8')
 
 SOCKET_LIST = [] # List with connected sockets
 
@@ -67,28 +63,35 @@ def server(host, port):
             else:
                 try:
                     data = sock.recv(1024)
-                    data = data.decode('utf-8')
-                    print(data)
+
+                    f = data
 
                     try:
-                        data = AESCipher.decrypt(data)
-                    except Exception:
+                        data = decrypt(key, data.decode('utf-8'))
+                    except Exception as e:
+                        print(e)
                         pass
+
+                    data = data.decode('utf-8')
+                    print('%s [%s]' % (data, f))
 
                     if '$' in data:
                         if data.split('$')[0] == 'USER':
                             username = data.split('$')[1]
                             message = '[SERVER] %s entered the server with id %s' % (username, addr[1])
-                            #broadcast(server_socket, sockfd, cipher.encrypt(message))
-                            #broadcast(server_socket, sockfd, message.encode('utf-8'))
+                            message = message.encode('utf-8')
+                            message = encrypt(key, message)
+                            broadcast(server_socket, sockfd, message.encode('utf-8'))
                             print(message)
 
                     elif data:
                         data = data.strip()
                         # Send data to all clients
                         message = '\r[%s] %s' % (addr[1], data)
-                        #broadcast(server_socket, sock, cipher.encrypt(message))
+                        message = message.encode('utf-8')
+                        message = encrypt(key, message)
                         broadcast(server_socket, sock, message.encode('utf-8'))
+                        #broadcast(server_socket, sock, message.encode('utf-8'))
 
                     else:
                         # remove the socket that's broken
@@ -97,11 +100,18 @@ def server(host, port):
 
                         # at this stage, no data means probably the connection has been broken
                         #broadcast(server_socket, sock, AESCipher.encrypt("Client [%s] left\n") % addr[1])
-                        broadcast(server_socket, sock, "Client [%s] left\n" % addr[1])
+                        message = "Client [%s] left" % addr[1]
+                        message = message.encode('utf-8')
+                        message = encrypt(key, message)
+                        broadcast(server_socket, sock, message.encode('utf-8'))
+                        #broadcast(server_socket, sock, "Client [%s] left" % addr[1])
 
                 except:
-                    #broadcast(server_socket, sock, AESCipher.encrypt("Client left\n"))
-                    broadcast(server_socket, sock, "Client left\n")
+                    message = "Client left"
+                    message = message.encode('utf-8')
+                    message = encrypt(key, message)
+                    broadcast(server_socket, sock, message.encode('utf-8'))
+                    #broadcast(server_socket, sock, "Client left")
                     continue
 
     server_socket.close()

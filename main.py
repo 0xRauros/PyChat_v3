@@ -4,28 +4,30 @@ from tkinter import *
 from tkinter.ttk import *
 from tkinter import messagebox
 from ttkthemes import ThemedStyle
+from Crypto.Cipher import AES
+from Crypto.Hash import SHA256
+from Crypto import Random
 
-class AESCipher:
-    def encrypt(key, source, encode=True):
-        key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
-        IV = Random.new().read(AES.block_size)  # generate IV
-        encryptor = AES.new(key, AES.MODE_CBC, IV)
-        padding = AES.block_size - len(source) % AES.block_size  # calculate needed padding
-        source += bytes([padding]) * padding  # Python 2.x: source += chr(padding) * padding
-        data = IV + encryptor.encrypt(source)  # store the IV at the beginning and encrypt
-        return base64.b64encode(data).decode("latin-1") if encode else data
+def encrypt(key, source, encode=True):
+    key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
+    IV = Random.new().read(AES.block_size)  # generate IV
+    encryptor = AES.new(key, AES.MODE_CBC, IV)
+    padding = AES.block_size - len(source) % AES.block_size  # calculate needed padding
+    source += bytes([padding]) * padding  # Python 2.x: source += chr(padding) * padding
+    data = IV + encryptor.encrypt(source)  # store the IV at the beginning and encrypt
+    return base64.b64encode(data).decode("latin-1") if encode else data
 
-    def decrypt(key, source, decode=True):
-        if decode:
-            source = base64.b64decode(source.encode("latin-1"))
-        key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
-        IV = source[:AES.block_size]  # extract the IV from the beginning
-        decryptor = AES.new(key, AES.MODE_CBC, IV)
-        data = decryptor.decrypt(source[AES.block_size:])  # decrypt
-        padding = data[-1]  # pick the padding value from the end; Python 2.x: ord(data[-1])
-        if data[-padding:] != bytes([padding]) * padding:  # Python 2.x: chr(padding) * padding
-            raise ValueError("Invalid padding...")
-        return data[:-padding]  # remove the padding
+def decrypt(key, source, decode=True):
+    if decode:
+        source = base64.b64decode(source.encode("latin-1"))
+    key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
+    IV = source[:AES.block_size]  # extract the IV from the beginning
+    decryptor = AES.new(key, AES.MODE_CBC, IV)
+    data = decryptor.decrypt(source[AES.block_size:])  # decrypt
+    padding = data[-1]  # pick the padding value from the end; Python 2.x: ord(data[-1])
+    if data[-padding:] != bytes([padding]) * padding:  # Python 2.x: chr(padding) * padding
+        raise ValueError("Invalid padding...")
+    return data[:-padding]  # remove the padding
 
 class Login(Tk):
     def __init__(self):
@@ -201,6 +203,7 @@ class MainWindow(Tk):
         global p
         user = username
         key = server_pwd
+        key = key.encode('utf-8') # encode to type bytes
         h = host
         p = port
 
@@ -257,8 +260,13 @@ class MainWindow(Tk):
             s.connect((h, int(p)))
             self.options['chatbox'].insert(END, '[SYSTEM] Connected!\n', 'deeppink')
             self.options['chatbox'].see(END)
-            foo = 'USER$' + user
-            s.send(foo.encode('utf-8'))
+            #foo = 'USER$' + user
+            #s.send(foo.encode('utf-8'))
+
+            message = 'USER$' + user
+            message = message.encode('utf-8')
+            message = encrypt(key, message)
+            s.send(message.encode('utf-8')) # Send message
         except Exception as e:
             self.options['chatbox'].insert(END, '[ERROR] %s\n' % e, 'red')
             self.options['chatbox'].see(END)
@@ -273,14 +281,17 @@ class MainWindow(Tk):
             for sock in read_sockets:
                 if sock == s:
                     data = sock.recv(1024)
-                    data = data.decode('utf-8')
-                    print(data)
+
 
                     try:
-                        data = AESCipher.decrypt(key, data)
-                        #print(data) # Debug
-                    except Exception:
+                        data = decrypt(key, data.decode('utf-8'))
+                        print(data)
+                    except Exception as e:
+                        print(e)
                         pass
+
+                    data = data.decode('utf-8')
+                    print(data)
 
                     if not data:
                         self.options['chatbox'].insert(END, 'Disconnected from server\n', 'red')
@@ -326,9 +337,10 @@ Commands:
         else:
             message = '[%s] %s ' % (user, self.options['chatbar'].get())
             self.options['chatbox'].insert(END, '[%s] %s\n' % (time.strftime('%X'), message)) # Insert on top
+            message = message.encode('utf-8')
+            message = encrypt(key, message)
+            s.send(message.encode('utf-8')) # Send message
             self.options['chatbar'].delete(0, END) # Clear chatbar
-            #s.send(AESCipher.encrypt(key, message)) # Send message
-            s.send(message.encode('utf-8'))
             self.options['chatbox'].see(END)
 
     def exit(self, event):
