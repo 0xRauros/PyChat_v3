@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, sys, random, string, hashlib, subprocess, signal, socket, select, threading, time, base64
+import os, sys, random, string, hashlib, subprocess, socket, select, threading, time, base64
 from tkinter import *
 from tkinter.ttk import *
 from tkinter import messagebox
