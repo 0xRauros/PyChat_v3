@@ -73,7 +73,7 @@ def server(host, port):
                         pass
 
                     data = data.decode('utf-8')
-                    print('%s [%s]' % (data, f))
+                    print('[%s] %s (decrypted from: %s)' % (addr[0], data, f.decode('utf-8')))
 
                     if '$' in data:
                         if data.split('$')[0] == 'USER':
