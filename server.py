@@ -46,7 +46,7 @@ def server(host, port):
     SOCKET_LIST.append(server_socket)
 
     #try:
-    print('[INFO] Server started on [%s:%i]' % (host, int(port)))
+    print('[%s] Server started on [%s:%i]' % (u'\u2139', host, int(port)))
     while running:
         ready_to_read,ready_to_write,in_error = select.select(SOCKET_LIST,[],[],0)
 
@@ -73,7 +73,7 @@ def server(host, port):
                         pass
 
                     data = data.decode('utf-8')
-                    print('[%s] %s (decrypted from: %s)' % (addr[0], data, f.decode('utf-8')))
+                    print('%s [%s] %s (decrypted from: %s)' % (u'\u2705',addr[0], data, f.decode('utf-8')))
 
                     if '$' in data:
                         if data.split('$')[0] == 'USER':
@@ -82,7 +82,17 @@ def server(host, port):
                             message = message.encode('utf-8')
                             message = encrypt(key, message)
                             broadcast(server_socket, sockfd, message.encode('utf-8'))
-                            print(message)
+                            #print(message)
+                        elif data.split('$')[0] == 'POKE':
+                            message = '%s' % (data)
+                            message = message.encode('utf-8')
+                            message = encrypt(key, message)
+                            broadcast(server_socket, sock, message.encode('utf-8'))
+                        elif data.split('$')[0] == 'ONLINE':
+                            message = '%s' % (data)
+                            message = message.encode('utf-8')
+                            message = encrypt(key, message)
+                            broadcast(server_socket, sock, message.encode('utf-8'))
 
                     elif data:
                         data = data.strip()

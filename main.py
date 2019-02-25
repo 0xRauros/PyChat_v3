@@ -282,10 +282,8 @@ class MainWindow(Tk):
                 if sock == s:
                     data = sock.recv(1024)
 
-
                     try:
                         data = decrypt(key, data.decode('utf-8'))
-                        print(data)
                     except Exception as e:
                         print(e)
                         pass
@@ -302,7 +300,18 @@ class MainWindow(Tk):
                         if data.startswith('[SERVER]'):
                             self.options['chatbox'].insert(END, '[%s] %s\n' % (time.strftime('%X'),data.strip()), 'deeppink')
                             self.options['chatbox'].see(END)
-
+                        elif data.startswith('POKE$'):
+                            print(data)
+                            if user == data.split('$')[1]:
+                                messagebox.showinfo('Pssst, hey!', '%s poked you!' % data.split('$')[2])
+                                message = 'ONLINE$%s$%s' % (data.split('$')[1], data.split('$')[2])
+                                message = message.encode('utf-8')
+                                message = encrypt(key, message)
+                                s.send(message.encode('utf-8')) # Send message
+                        elif data.startswith('ONLINE$'):
+                            print(data)
+                            if user == data.split('$')[2]:
+                                messagebox.showinfo('True', '%s is online!' % data.split('$')[1])
                         else:
                             self.options['chatbox'].insert(END, '[%s] %s\n' % (time.strftime('%X'),data.strip()), 'orange')
                             self.options['chatbox'].see(END)
@@ -327,17 +336,26 @@ class MainWindow(Tk):
 Commands:
         /help       | View this help
         /whoami     | Show as which username you're connected
+        /poke       | Poke a user and see if they're online or not
         /clear      | Clear chatbox
         /cls        | Alias for /clear
         /quit       | Shutdown application
         /exit       | Alias for /quit
             '''
-            self.options['chatbox'].insert(END, '[SYSTEM] %s\n' % (message), 'deeppink') # Insert on top
+            self.options['chatbox'].insert(END, '[SYSTEM] %s\n' % (message), 'deeppink')
+            self.options['chatbar'].delete(0, END) # Clear chatbar
+            self.options['chatbox'].see(END)
+        elif self.options['chatbar'].get().startswith('/poke'):
+            message = 'POKE$%s$%s' % (self.options['chatbar'].get().split(' ')[1], user)
+            self.options['chatbox'].insert(END, '[%s] [SYSTEM] You poked %s\n' % (time.strftime('%X'), self.options['chatbar'].get().split(' ')[1]), 'deeppink')
+            message = message.encode('utf-8')
+            message = encrypt(key, message)
+            s.send(message.encode('utf-8')) # Send message
             self.options['chatbar'].delete(0, END) # Clear chatbar
             self.options['chatbox'].see(END)
         else:
             message = '[%s] %s ' % (user, self.options['chatbar'].get())
-            self.options['chatbox'].insert(END, '[%s] %s\n' % (time.strftime('%X'), message)) # Insert on top
+            self.options['chatbox'].insert(END, '[%s] %s\n' % (time.strftime('%X'), message))
             message = message.encode('utf-8')
             message = encrypt(key, message)
             s.send(message.encode('utf-8')) # Send message
