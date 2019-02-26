@@ -303,11 +303,11 @@ class MainWindow(Tk):
                         elif data.startswith('POKE$'):
                             print(data)
                             if user == data.split('$')[1]:
-                                messagebox.showinfo('Pssst, hey!', '%s poked you!' % data.split('$')[2])
                                 message = 'ONLINE$%s$%s' % (data.split('$')[1], data.split('$')[2])
                                 message = message.encode('utf-8')
                                 message = encrypt(key, message)
                                 s.send(message.encode('utf-8')) # Send message
+                                messagebox.showinfo('Pssst, hey!', '%s poked you!' % data.split('$')[2])
                         elif data.startswith('ONLINE$'):
                             print(data)
                             if user == data.split('$')[2]:
