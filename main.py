@@ -289,7 +289,7 @@ class MainWindow(Tk):
                         pass
 
                     data = data.decode('utf-8')
-                    print(data)
+                    #print(data)
 
                     if not data:
                         self.options['chatbox'].insert(END, 'Disconnected from server\n', 'red')
