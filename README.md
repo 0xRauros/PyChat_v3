@@ -1,5 +1,6 @@
 ![alt text](./demo1.png "Logon and register screen")
 ![alt text](./demo2.png "PyChat demo")
+![alt text](./demo3.gif "PyChat poke feature demo")
 
 # PyChat_v3
 Python 3 P2P chat application, secured with AES encryption
