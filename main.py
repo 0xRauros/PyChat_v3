@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, sys, random, string, hashlib, subprocess, socket, select, threading, time, base64, plaform
+import os, sys, random, string, hashlib, subprocess, socket, select, threading, time, base64, platform
 from tkinter import *
 from tkinter.ttk import *
 from tkinter import messagebox
@@ -70,26 +70,26 @@ class Login(Tk):
         label.image = photo # keep a reference!
         label.grid(row = 0, column = 0, columnspan = 2)
 
-        Label(self, text = 'Username', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 1, column = 0)
-        self.a = Entry(self, textvariable = self.options['username'], width = 30)
-        self.a.grid(row = 2, column = 0, columnspan = 2)
+        Label(self, text = 'Username', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 1, column = 0, sticky = 'w')
+        self.a = Entry(self, textvariable = self.options['username'], width = 31)
+        self.a.grid(row = 2, column = 0, columnspan = 2, sticky = 'w')
         self.a.focus()
 
-        Label(self, text = 'Password', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 3, column = 0)
-        Entry(self, textvariable = self.options['pwd'], width = 30, show = '*').grid(row = 4, column = 0, columnspan = 2)
+        Label(self, text = 'Password', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 3, column = 0, sticky = 'w')
+        Entry(self, textvariable = self.options['pwd'], width = 31, show = '*').grid(row = 4, column = 0, columnspan = 2, sticky = 'w')
 
-        Label(self, text = 'Server Password', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 5, column = 0)
-        Entry(self, textvariable = self.options['key'], width = 30, show = '*').grid(row = 6, column = 0, columnspan = 2)
+        Label(self, text = 'Server Password', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 5, column = 0, sticky = 'w')
+        Entry(self, textvariable = self.options['key'], width = 31, show = '*').grid(row = 6, column = 0, columnspan = 2, sticky = 'w')
 
-        Label(self, text = 'Host', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 7, column = 0)
-        Entry(self, textvariable = self.options['host'], width = 30).grid(row = 8, column = 0, columnspan = 2)
+        Label(self, text = 'Host', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 7, column = 0, sticky = 'w')
+        Entry(self, textvariable = self.options['host'], width = 31).grid(row = 8, column = 0, columnspan = 2, sticky = 'w')
 
-        Label(self, text = 'Port', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 9, column = 0)
-        Entry(self, textvariable = self.options['port'], width = 30).grid(row = 10, column = 0, columnspan = 2)
+        Label(self, text = 'Port', background = 'white', foreground = 'black', font='Helvetica 12 bold').grid(row = 9, column = 0, sticky = 'w')
+        Entry(self, textvariable = self.options['port'], width = 31).grid(row = 10, column = 0, columnspan = 2, sticky = 'w')
 
-        login_clk = Button(self, text = 'Login', command = self.login, width = 30).grid(row = 11, column = 0, columnspan = 2)
-        register_clk = Button(self, text = 'Register', command = self.register, width = 30).grid(row = 12, column = 0, columnspan = 2)
-        close = Button(self, text = 'Exit', command = self.destroy, width = 30).grid(row =13, column = 0, columnspan = 2)
+        login_clk = Button(self, text = 'Login', command = self.login, width = 30).grid(row = 11, column = 0, columnspan = 2, sticky = 'w')
+        register_clk = Button(self, text = 'Register', command = self.register, width = 30).grid(row = 12, column = 0, columnspan = 2, sticky = 'w')
+        close = Button(self, text = 'Exit', command = self.destroy, width = 30).grid(row =13, column = 0, columnspan = 2, sticky = 'w')
         self.bind("<Return>", self.login_event) # Press ESC to quit app
 
     def login_event(self, event):
@@ -198,6 +198,7 @@ class MainWindow(Tk):
         self.configure(background = 'white')
         icon = PhotoImage(file='images/chat_icon.png')
         self.tk.call('wm', 'iconphoto', self._w, icon)
+        self.protocol("WM_DELETE_WINDOW", self.on_close_event)
         if platform.system() == 'Linux':
             self.eval('tk::PlaceWindow %s center' % self.winfo_pathname(self.winfo_id()))
         else:
@@ -224,7 +225,7 @@ class MainWindow(Tk):
         }
 
         self.options['chatbox'] = Text(self, foreground="black", background="white", highlightcolor="white", highlightbackground="black", height = 28, width = 80)
-        self.options['chatbox'].grid(row = 0, column = 1)
+        self.options['chatbox'].grid(row = 0, column = 0)
 
         # Tags
         self.options['chatbox'].tag_configure('yellow', foreground='yellow')
@@ -235,14 +236,19 @@ class MainWindow(Tk):
 
         self.options['chatbox'].insert(END, '[SYSTEM] Do /help to view a list with commands.\n', 'deeppink')
 
+        '''
+        User list is on my ToDo list.
+        self.options['users'] = Listbox(self, width = 30, height = 30)
+        self.options['users'].grid(row = 0, column = 1, rowspan = 3, sticky = 'n')
+        self.options['users'].insert(END, 'Online Users:')
+        '''
         # Send text entry
-        self.options['chatbar'] = Entry(self, textvariable = self.options['chatbar'], width = 70)
-        self.options['chatbar'].grid(row = 1, column = 0, columnspan = 4)
-        submit = Button(self, text = "Submit", command = self.send_message, width = 68).grid(row = 7, column = 0, columnspan = 2)
+        self.options['chatbar'] = Entry(self, textvariable = self.options['chatbar'], width = 79)
+        self.options['chatbar'].grid(row = 1, column = 0, columnspan = 4, sticky = 'w')
         self.options['chatbar'].bind('<Return>', self.send_message_event) # Send message with the Return key (aka Enter)
         self.options['chatbar'].focus()
 
-        submit = Button(self, text = "Submit", command = self.send_message, width = 68).grid(row = 7, column = 0, columnspan = 2)
+        submit = Button(self, text = "Submit", command = self.send_message, width = 78).grid(row = 2, column = 0, columnspan = 2, sticky = 'w')
 
         try:
             self.connect()
@@ -262,6 +268,7 @@ class MainWindow(Tk):
         thread.start()
 
     def keep_alive(self):
+        online = []
         try:
             s.connect((h, int(p)))
             self.options['chatbox'].insert(END, '[SYSTEM] Connected!\n', 'deeppink')
@@ -307,7 +314,6 @@ class MainWindow(Tk):
                             self.options['chatbox'].insert(END, '[%s] %s\n' % (time.strftime('%X'),data.strip()), 'deeppink')
                             self.options['chatbox'].see(END)
                         elif data.startswith('POKE$'):
-                            print(data)
                             if user == data.split('$')[1]:
                                 message = 'ONLINE$%s$%s' % (data.split('$')[1], data.split('$')[2])
                                 message = message.encode('utf-8')
@@ -315,7 +321,6 @@ class MainWindow(Tk):
                                 s.send(message.encode('utf-8')) # Send message
                                 messagebox.showinfo('Pssst, hey!', '%s poked you!' % data.split('$')[2])
                         elif data.startswith('ONLINE$'):
-                            print(data)
                             if user == data.split('$')[2]:
                                 messagebox.showinfo('True', '%s is online!' % data.split('$')[1])
                         else:
@@ -369,6 +374,23 @@ Commands:
             self.options['chatbox'].see(END)
 
     def exit(self, event):
+        self.on_close_event()
+
+    def on_close_event(self):
+        result = messagebox.askyesno("Are you sure?","Are you sure you want to exit?")
+        if result == False:
+            return
+        else:
+            pass
+
+        try:
+            message = 'LEFT$%s' % user
+            message = message.encode('utf-8')
+            message = encrypt(key, message)
+            s.send(message.encode('utf-8')) # Send message
+        except Exception: # If not connected with a server, pass and close
+            pass
+
         sys.exit(0)
 
 logon = Login()

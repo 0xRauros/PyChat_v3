@@ -37,6 +37,7 @@ SOCKET_LIST = [] # List with connected sockets
 
 def server(host, port):
     running = True
+    online_users = []
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -57,9 +58,12 @@ def server(host, port):
                 SOCKET_LIST.append(sockfd)
 
                 # Sent welcome to just that client.
-                #sockfd.send(AESCipher.encrypt('[SERVER] Welcome, you connected from %s:%s' % addr))
-                foo = '[SERVER] Welcome, you connected from %s:%s' % addr
+                foo = '[SERVER] Welcome, you connected from %s:%s. The following users are online: %s' % (addr[0], addr[1], online_users)
+                foo = foo.encode('utf-8')
+                foo = encrypt(key, foo)
                 sockfd.send(foo.encode('utf-8'))
+
+
             else:
                 try:
                     data = sock.recv(1024)
@@ -76,23 +80,37 @@ def server(host, port):
                     print('%s [%s] %s (decrypted from: %s)' % (u'\u2705',addr[0], data, f.decode('utf-8')))
 
                     if '$' in data:
+                        # If someone joined the server, grab their username
                         if data.split('$')[0] == 'USER':
                             username = data.split('$')[1]
+                            online_users.append(username) # Append to Online users
+                            print(online_users)
                             message = '[SERVER] %s entered the server with id %s' % (username, addr[1])
                             message = message.encode('utf-8')
                             message = encrypt(key, message)
                             broadcast(server_socket, sockfd, message.encode('utf-8'))
                             #print(message)
+                        # This targets the poked user
                         elif data.split('$')[0] == 'POKE':
                             message = '%s' % (data)
                             message = message.encode('utf-8')
                             message = encrypt(key, message)
                             broadcast(server_socket, sock, message.encode('utf-8'))
+                        # Poke response to see if someone's online, report to poker
                         elif data.split('$')[0] == 'ONLINE':
                             message = '%s' % (data)
                             message = message.encode('utf-8')
                             message = encrypt(key, message)
                             broadcast(server_socket, sock, message.encode('utf-8'))
+                        # Event when someone leaves the server
+                        elif data.split('$')[0] == 'LEFT':
+                            username = data.split('$')[1]
+                            online_users.remove(username) # Remove from Online Users
+                            message = '[SERVER] User %s left the server' % username
+                            message = message.encode('utf-8')
+                            message = encrypt(key, message)
+                            broadcast(server_socket, sock, message.encode('utf-8'))
+
 
                     elif data:
                         data = data.strip()
@@ -109,15 +127,13 @@ def server(host, port):
                             SOCKET_LIST.remove(sock)
 
                         # at this stage, no data means probably the connection has been broken
-                        #broadcast(server_socket, sock, AESCipher.encrypt("Client [%s] left\n") % addr[1])
-                        message = "Client [%s] left" % addr[1]
-                        message = message.encode('utf-8')
-                        message = encrypt(key, message)
-                        broadcast(server_socket, sock, message.encode('utf-8'))
-                        #broadcast(server_socket, sock, "Client [%s] left" % addr[1])
+                        #message = "[SERVER] Client [%s] left" % addr[1]
+                        #message = message.encode('utf-8')
+                        #message = encrypt(key, message)
+                        #broadcast(server_socket, sock, message.encode('utf-8'))
 
                 except:
-                    message = "Client left"
+                    message = "[SERVER] A Client left"
                     message = message.encode('utf-8')
                     message = encrypt(key, message)
                     broadcast(server_socket, sock, message.encode('utf-8'))
