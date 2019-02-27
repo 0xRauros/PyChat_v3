@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, sys, random, string, hashlib, subprocess, socket, select, threading, time, base64
+import os, sys, random, string, hashlib, subprocess, socket, select, threading, time, base64, plaform
 from tkinter import *
 from tkinter.ttk import *
 from tkinter import messagebox
@@ -41,7 +41,10 @@ class Login(Tk):
         self.configure(background = 'white')
         icon = PhotoImage(file='images/icon.png')
         self.tk.call('wm', 'iconphoto', self._w, icon)
-        self.eval('tk::PlaceWindow %s center' % self.winfo_pathname(self.winfo_id()))
+        if platform.system() == 'Linux':
+            self.eval('tk::PlaceWindow %s center' % self.winfo_pathname(self.winfo_id()))
+        else:
+            pass
 
         self.bind("<Escape>", self.exit) # Press ESC to quit app
 
@@ -195,7 +198,10 @@ class MainWindow(Tk):
         self.configure(background = 'white')
         icon = PhotoImage(file='images/chat_icon.png')
         self.tk.call('wm', 'iconphoto', self._w, icon)
-        self.eval('tk::PlaceWindow %s center' % self.winfo_pathname(self.winfo_id()))
+        if platform.system() == 'Linux':
+            self.eval('tk::PlaceWindow %s center' % self.winfo_pathname(self.winfo_id()))
+        else:
+            pass
 
         global user
         global key
