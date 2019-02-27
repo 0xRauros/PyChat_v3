@@ -6,6 +6,11 @@
 Python 3 P2P chat application, secured with AES encryption
 
 ---
+## [Version 3.0.4]
+Server now tracks online users and displays them if someone connects (to just the new client).
+Fixed the bug mentioned in v3.0.3, about closing the application.
+
+---
 ## [Version 3.0.3]
 Chat works as expected and as it should, data is now encrypted with AES.
 There is one known bug on closing the windows, that's why I coded a "press ESC to close" feature in it, so it won't trigger the bug on exiting the application.
