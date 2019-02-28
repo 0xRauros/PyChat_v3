@@ -2,7 +2,7 @@
 ![alt text](./demo2.png "PyChat demo")
 ![alt text](./demo3.gif "PyChat poke feature demo")
 
-# PyChat_v3
+# PyChat_v3 ![alt text](./images/red_python.png) "icon")
 Python 3 P2P chat application, secured with AES encryption
 
 ---
