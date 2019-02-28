@@ -196,7 +196,7 @@ class MainWindow(Tk):
         self.ttkStyle = ThemedStyle()
         self.ttkStyle.set_theme("arc")
         self.configure(background = 'white')
-        icon = PhotoImage(file='images/chat_icon.png')
+        icon = PhotoImage(file='images/red_python.png')
         self.tk.call('wm', 'iconphoto', self._w, icon)
         self.protocol("WM_DELETE_WINDOW", self.on_close_event)
         if platform.system() == 'Linux':
@@ -283,6 +283,7 @@ class MainWindow(Tk):
         except Exception as e:
             self.options['chatbox'].insert(END, '[ERROR] %s\n' % e, 'red')
             self.options['chatbox'].see(END)
+            messagebox.showwarning('ERROR', '%s' % e)
             return
 
         while True:

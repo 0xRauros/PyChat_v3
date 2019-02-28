@@ -131,6 +131,7 @@ def server(host, port):
                         #message = message.encode('utf-8')
                         #message = encrypt(key, message)
                         #broadcast(server_socket, sock, message.encode('utf-8'))
+                        #broadcast(server_socket, sock, "Client [%s] left" % addr[1])
 
                 except:
                     message = "[SERVER] A Client left"
