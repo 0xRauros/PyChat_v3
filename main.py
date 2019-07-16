@@ -7,6 +7,7 @@ from ttkthemes import ThemedStyle
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from Crypto import Random
+from PIL import ImageTk, Image
 
 def encrypt(key, source, encode=True):
     key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
@@ -39,7 +40,10 @@ class Login(Tk):
         self.ttkStyle = ThemedStyle()
         self.ttkStyle.set_theme("arc")
         self.configure(background = 'white')
-        icon = PhotoImage(file='images/icon.png')
+        if platform.system() == 'Darwin':
+            icon = ImageTk.PhotoImage(Image.open('images/icon.png'))
+        else:
+            icon = PhotoImage(file='images/icon.png')
         self.tk.call('wm', 'iconphoto', self._w, icon)
         if platform.system() == 'Linux':
             self.eval('tk::PlaceWindow %s center' % self.winfo_pathname(self.winfo_id()))
@@ -63,9 +67,12 @@ class Login(Tk):
         self.options['host'].set('0.0.0.0')
         self.options['port'].set(8989)
 
-        photo = PhotoImage(file='images/login_img.png')
+        if platform.system() == 'Darwin':
+            photo = ImageTk.PhotoImage(Image.open('images/login_img.png'))
+        else:
+            photo = PhotoImage(file='images/login_img.png')
         #photo = photo.zoom(2)
-        photo = photo.subsample(1)
+        #photo = photo.subsample(1)
         label = Label(self, image=photo, background = 'white')
         label.image = photo # keep a reference!
         label.grid(row = 0, column = 0, columnspan = 2)
@@ -119,9 +126,18 @@ class Login(Tk):
         self.reg.configure(background = 'white')
         self.reg.resizable(0,0)
 
-        reg_photo = PhotoImage(file='images/register.png')
+        if platform.system() == 'Darwin':
+            #reg_photo = ImageTk.PhotoImage(Image.open('images/register.png'))
+            reg_photo = Image.open('images/register.png')
+        else:
+            reg_photo = PhotoImage(file='images/register.png')
         #photo = photo.zoom(2)
-        reg_photo = reg_photo.subsample(2)
+        if platform.system() == 'Darwin':
+            reg_photo = reg_photo.resize((150,150), Image.ANTIALIAS)
+            reg_photo = ImageTk.PhotoImage(reg_photo)
+        else:
+            reg_photo = reg_photo.subsample(2)
+
         label = Label(self.reg, image=reg_photo, background = 'white')
         label.image = reg_photo # keep a reference!
         label.grid(row = 0, column = 0, columnspan = 2)
@@ -196,7 +212,10 @@ class MainWindow(Tk):
         self.ttkStyle = ThemedStyle()
         self.ttkStyle.set_theme("arc")
         self.configure(background = 'white')
-        icon = PhotoImage(file='images/red_python.png')
+        if platform.system() == 'Darwin':
+            icon = ImageTk.PhotoImage(Image.open('images/red_python.png'))
+        else:
+            icon = PhotoImage(file='images/red_python.png')
         self.tk.call('wm', 'iconphoto', self._w, icon)
         self.protocol("WM_DELETE_WINDOW", self.on_close_event)
         if platform.system() == 'Linux':
