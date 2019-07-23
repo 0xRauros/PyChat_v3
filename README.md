@@ -30,11 +30,19 @@ Installation:
 Linux: 
 ```Shell
 pip3 install -r requirements.txt
-python3 main.py
+python3 PyChat.py
 ```
 
 Windows:
 ```Shell
 pip3 install -r requirements.txt
-py main.py
+py PyChat.py
 ```
+
+MacOS
+```
+pip3 install -r requirements.txt
+python3 PyChat.py
+```
+
+Or run PyChat.app on MacOS
